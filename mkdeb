@@ -1,0 +1,80 @@
+#!/bin/bash
+#
+# File: mkdeb.sh
+# Version: 0.11.04
+# Description: this bash shell script shows how
+#              to generate a debian package.
+#
+# Created date: March 20th, 2011
+# Author: mutse <yyhoo2.young@gmail.com>
+#
+# History:
+#        Version         Date
+#        0.11.03   March 20th, 2011
+#        0.11.04   April 16th, 2011
+#
+# (C) 2011 Chin Foundry. All Rights Reserved.
+#
+echo
+echo "mkdeb (chin foundry utility) 0.11.04"
+echo "(C) 2011 Chin Foundry. All Rights Reserved."
+echo
+
+if [ ! -e /usr/bin/dh_make ]
+  then
+    sudo apt-get install dh-make
+fi
+
+echo "Plese choose a directory name which you want to package:"
+read -p " >> " DIRNAME
+
+echo "Please input the version of your package:"
+read -p " >> " VERSION
+SRCDIRNAME=$DIRNAME"-"$VERSION
+
+if [ ! -d $DIRNAME ]
+  then
+    if [ ! -d $SRCDIRNAME ]
+      then
+        echo "$DIRNAME or $SRCDIRNAME is not exist."
+        exit 1
+    fi
+fi
+
+if [ ! -d $SRCDIRNAME ]
+  then
+    mv "$DIRNAME" "$SRCDIRNAME"
+fi
+
+TARNAME=$DIRNAME"_"$VERSION".orig.tar.gz"
+
+# clean debian directory
+if [ -d $SRCDIRNAME/debian ]
+  then
+    rm -rf $SRCDIRNAME/debian
+fi
+
+# if tar is exist, then clean it
+if [ -e $TARNAME ]
+  then
+    rm $TARNAME
+fi
+
+tar -czvf $TARNAME $SRCDIRNAME
+
+echo "Please input your email:"
+read -p " >> " EMAIL
+
+cd $SRCDIRNAME
+
+#USER=`id -un`
+dh_make -s -e $EMAIL -f ../$TARNAME
+
+rm debian/*.ex debian/*.EX
+gedit debian/changelog
+gedit debian/control
+dpkg-buildpackage -rfakeroot -b
+#cd ..
+#sudo chown -R $USER:$USER *.deb
+
+echo -e "\033[1;32mYour debian package is generated.\033[0m"
